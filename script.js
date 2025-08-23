@@ -62,7 +62,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const [year, month, day] = dateInput.split("-");
       const date = new Date(Date.UTC(year, month - 1, day));
       if (isNaN(date.getTime())) return "-";
-      return date.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+      return date.toLocaleDateString("pt-BR", {
+        timeZone: "UTC"
+      });
     } catch (e) {
       console.error("Erro ao formatar a data:", e);
       return "-";
@@ -72,7 +74,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const dateToYYYYMMDD = (dateInput) => {
     if (!dateInput) return null;
     if (dateInput instanceof Date && !isNaN(dateInput)) {
-      // Corrige o problema de fuso horário da biblioteca XLSX
       const date = new Date(
         dateInput.getTime() - dateInput.getTimezoneOffset() * 60000
       );
@@ -155,13 +156,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const carregarDadosIniciais = () => {
     try {
       const transacoesSalvas = localStorage.getItem("transacoes");
-      transacoes = transacoesSalvas
-        ? JSON.parse(transacoesSalvas).map((t) => ({ ...t, id: Number(t.id) }))
-        : [];
+      transacoes = transacoesSalvas ?
+        JSON.parse(transacoesSalvas).map((t) => ({ ...t,
+          id: Number(t.id)
+        })) :
+        [];
       const recorrentesSalvos = localStorage.getItem("lancamentosRecorrentes");
-      lancamentosRecorrentes = recorrentesSalvos
-        ? JSON.parse(recorrentesSalvos)
-        : [];
+      lancamentosRecorrentes = recorrentesSalvos ?
+        JSON.parse(recorrentesSalvos) :
+        [];
     } catch (e) {
       console.error("Erro ao carregar dados:", e);
       transacoes = [];
@@ -181,9 +184,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const dataLancamento = new Date(anoAtual, mesAtual, recorrente.dia);
       const jaExiste = transacoes.some(
         (t) =>
-          t.recorrenteId === recorrente.id &&
-          new Date(t.data + "T00:00:00").getUTCMonth() === mesAtual &&
-          new Date(t.data + "T00:00:00").getUTCFullYear() === anoAtual
+        t.recorrenteId === recorrente.id &&
+        new Date(t.data + "T00:00:00").getUTCMonth() === mesAtual &&
+        new Date(t.data + "T00:00:00").getUTCFullYear() === anoAtual
       );
 
       if (!jaExiste && dataLancamento <= hoje) {
@@ -192,9 +195,10 @@ document.addEventListener("DOMContentLoaded", () => {
           tipo: `${recorrente.tipo} recorrente`,
           data: dataLancamento.toISOString().split("T")[0],
           valor: recorrente.valor,
-          detalhes: [
-            { valor: recorrente.valor, obs: `Recorrente: ${recorrente.obs}` },
-          ],
+          detalhes: [{
+            valor: recorrente.valor,
+            obs: `Recorrente: ${recorrente.obs}`
+          }, ],
           recorrenteId: recorrente.id,
         });
         novasTransacoesGeradas = true;
@@ -217,7 +221,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!obs || isNaN(valor) || isNaN(dia))
       return mostrarToast("Por favor, preencha todos os campos.", "error");
 
-    lancamentosRecorrentes.push({ id: Date.now(), tipo, obs, valor, dia });
+    lancamentosRecorrentes.push({
+      id: Date.now(),
+      tipo,
+      obs,
+      valor,
+      dia
+    });
     salvarRecorrentes();
     renderizarListaRecorrentes();
     document.getElementById("formRecorrente").reset();
@@ -303,28 +313,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const itensPaginados = [...transacoesParaExibir]
       .sort(
         (a, b) =>
-          // CORREÇÃO: Alterado de b-a para a-b para ordem crescente
-          new Date(a.data) - new Date(b.data) ||
-          (tipoOrdem[a.tipo] || 99) - (tipoOrdem[b.tipo] || 99)
+        // MELHORIA: Alterado de b-a para a-b para ordem cronológica (crescente)
+        new Date(a.data) - new Date(b.data) ||
+        (tipoOrdem[a.tipo] || 99) - (tipoOrdem[b.tipo] || 99)
       )
       .slice(inicio, fim);
 
     itensPaginados.forEach((transacao) => {
-      // INÍCIO DA MODIFICAÇÃO
+      // MELHORIA: Lógica de detalhes simplificada e mais limpa.
       const detalhesList = transacao.detalhes || [];
-      const mostrarDetalhes =
-        detalhesList.length > 1 ||
-        (detalhesList.length === 1 && detalhesList[0].obs);
-      const detalhesTexto = mostrarDetalhes
-        ? detalhesList
-            .map((d) =>
-              d.valor === 0 && !d.obs
-                ? "0,00"
-                : `${d.valor.toFixed(2).replace(".", ",")} (${d.obs || ""})`
-            )
-            .join("\n")
-        : "";
-      // FIM DA MODIFICAÇÃO
+      const detalhesTexto = detalhesList
+        .map((d) => {
+          const valorFormatado = d.valor.toFixed(2).replace(".", ",");
+          return d.obs ? `${valorFormatado} (${d.obs})` : valorFormatado;
+        })
+        .join("\n");
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
@@ -377,7 +380,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const atualizarGrafico = () => {
     const anoSelecionado = filtroAnoGrafico.value;
     if (!anoSelecionado) return;
-    const dados = { entradas: Array(12).fill(0), saidas: Array(12).fill(0) };
+    const dados = {
+      entradas: Array(12).fill(0),
+      saidas: Array(12).fill(0)
+    };
     transacoes
       .filter((t) => t.data.startsWith(anoSelecionado))
       .forEach((t) => {
@@ -404,22 +410,19 @@ document.addEventListener("DOMContentLoaded", () => {
           "Nov",
           "Dez",
         ],
-        datasets: [
-          {
-            label: "Entradas",
-            data: dados.entradas,
-            backgroundColor: "rgba(76, 175, 80, 0.5)",
-            borderColor: "rgba(76, 175, 80, 1)",
-            borderWidth: 1,
-          },
-          {
-            label: "Saídas",
-            data: dados.saidas,
-            backgroundColor: "rgba(244, 67, 54, 0.5)",
-            borderColor: "rgba(244, 67, 54, 1)",
-            borderWidth: 1,
-          },
-        ],
+        datasets: [{
+          label: "Entradas",
+          data: dados.entradas,
+          backgroundColor: "rgba(76, 175, 80, 0.5)",
+          borderColor: "rgba(76, 175, 80, 1)",
+          borderWidth: 1,
+        }, {
+          label: "Saídas",
+          data: dados.saidas,
+          backgroundColor: "rgba(244, 67, 54, 0.5)",
+          borderColor: "rgba(244, 67, 54, 1)",
+          borderWidth: 1,
+        }, ],
       },
       options: {
         responsive: true,
@@ -427,7 +430,9 @@ document.addEventListener("DOMContentLoaded", () => {
         scales: {
           y: {
             beginAtZero: true,
-            ticks: { callback: (value) => formatarMoeda(value) },
+            ticks: {
+              callback: (value) => formatarMoeda(value)
+            },
           },
         },
         plugins: {
@@ -473,16 +478,14 @@ document.addEventListener("DOMContentLoaded", () => {
       type: "line",
       data: {
         labels: previsoes.map((p) => p.mes),
-        datasets: [
-          {
-            label: "Saldo Projetado",
-            data: previsoes.map((p) => p.saldo),
-            borderColor: "rgba(44, 93, 138, 0.8)",
-            backgroundColor: "rgba(44, 93, 138, 0.2)",
-            fill: true,
-            tension: 0.1,
-          },
-        ],
+        datasets: [{
+          label: "Saldo Projetado",
+          data: previsoes.map((p) => p.saldo),
+          borderColor: "rgba(44, 93, 138, 0.8)",
+          backgroundColor: "rgba(44, 93, 138, 0.2)",
+          fill: true,
+          tension: 0.1,
+        }, ],
       },
       options: {
         responsive: true,
@@ -490,7 +493,9 @@ document.addEventListener("DOMContentLoaded", () => {
         scales: {
           y: {
             beginAtZero: false,
-            ticks: { callback: (value) => formatarMoeda(value) },
+            ticks: {
+              callback: (value) => formatarMoeda(value)
+            },
           },
         },
         plugins: {
@@ -566,21 +571,19 @@ document.addEventListener("DOMContentLoaded", () => {
       newGroup.querySelector(".valor-transacao").focus();
     }
   };
-  const limparFormulario = () => {
-    // Salva a data atual antes de limpar o formulário
-    const dataAtual = dataTransacaoInput.value;
 
+  // MELHORIA: Mantém a data ao limpar o formulário.
+  const limparFormulario = () => {
+    const dataAtual = dataTransacaoInput.value;
     editandoTransacaoId = null;
     form.reset();
     valorObsContainer.innerHTML = "";
     adicionarCampoValor();
-
-    // Restaura a data salva
     dataTransacaoInput.value = dataAtual;
-
     formBtn.innerHTML = `<i class="fas fa-plus-circle"></i> Adicionar Transação`;
     formSection.classList.remove("editing");
   };
+
   const adicionarOuAtualizarTransacao = () => {
     const tipo = tipoTransacaoInput.value;
     const data = dataTransacaoInput.value;
@@ -598,7 +601,10 @@ document.addEventListener("DOMContentLoaded", () => {
         erroValidacao = "Saídas com valor > 0 exigem observação.";
       else {
         valorTotal += valor;
-        detalhes.push({ valor, obs });
+        detalhes.push({
+          valor,
+          obs
+        });
       }
     });
     if (erroValidacao) return mostrarToast(erroValidacao, "error");
@@ -641,13 +647,18 @@ document.addEventListener("DOMContentLoaded", () => {
     tipoTransacaoInput.value = transacao.tipo;
     dataTransacaoInput.value = transacao.data;
     valorObsContainer.innerHTML = "";
-    (transacao.detalhes.length
-      ? transacao.detalhes
-      : [{ valor: transacao.valor, obs: "" }]
+    (transacao.detalhes.length ?
+      transacao.detalhes :
+      [{
+        valor: transacao.valor,
+        obs: ""
+      }]
     ).forEach((d) => adicionarCampoValor(d.valor, d.obs || ""));
     formBtn.innerHTML = `<i class="fas fa-save"></i> Atualizar Transação`;
     formSection.classList.add("editing");
-    formSection.scrollIntoView({ behavior: "smooth" });
+    formSection.scrollIntoView({
+      behavior: "smooth"
+    });
   };
   const removerTransacao = async (id) => {
     const confirmado = await mostrarModal(
@@ -685,31 +696,32 @@ document.addEventListener("DOMContentLoaded", () => {
         "Não há dados nos filtros atuais para exportar.",
         "error"
       );
+
     const dados = transacoesParaExportar.map((t) => ({
       data: formatarData(t.data),
       tipo: t.tipo,
-      // MODIFICAÇÃO: Formata o valor para string com vírgula
-      valor: t.valor.toFixed(2).replace(".", ","),
+      // CORREÇÃO: Exportar o valor como número puro.
+      valor: t.valor,
       detalhes: (t.detalhes || [])
-        .map((d) =>
-          d.valor === 0 && !d.obs
-            ? "0,00"
-            : `${d.valor.toFixed(2).replace(".", ",")} (${d.obs || ""})`
-        )
-        .join("; "),
+      .map((d) =>
+        d.valor === 0 && !d.obs ?
+        "0,00" :
+        `${d.valor.toFixed(2).replace(".", ",")} (${d.obs || ""})`
+      )
+      .join("; "),
     }));
+
     const worksheet = XLSX.utils.json_to_sheet(dados);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Transacoes");
 
-    // MODIFICAÇÃO: Nome do arquivo dinâmico
+    // MELHORIA: Nome de arquivo dinâmico.
     const dataAtual = new Date();
     const dia = String(dataAtual.getDate()).padStart(2, "0");
     const mes = String(dataAtual.getMonth() + 1).padStart(2, "0");
     const ano = String(dataAtual.getFullYear()).slice(-2);
     const hora = String(dataAtual.getHours()).padStart(2, "0");
     const minuto = String(dataAtual.getMinutes()).padStart(2, "0");
-
     const nomeArquivo = `Caixa ${dia}${mes}${ano}-${hora}h${minuto}.xlsx`;
 
     XLSX.writeFile(workbook, nomeArquivo);
@@ -729,44 +741,62 @@ document.addEventListener("DOMContentLoaded", () => {
         );
         if (jsonData.length === 0)
           return mostrarToast("Arquivo vazio ou inválido.", "error");
+
         const novasTransacoes = jsonData
           .map((row) => {
             const dataFormatada = dateToYYYYMMDD(row.data);
-            if (!row.tipo || !dataFormatada || isNaN(row.valor)) return null;
+            // CORREÇÃO: Trata tanto números quanto texto com vírgula.
+            const valorNumerico = parseFloat(
+              String(row.valor).replace(",", ".")
+            );
+
+            if (!row.tipo || !dataFormatada || isNaN(valorNumerico))
+              return null;
+
             const detalhes = [];
             if (row.detalhes && typeof row.detalhes === "string") {
               row.detalhes.split(";").forEach((d) => {
                 const match = d.trim().match(/([\d,.-]+)\s*\((.*)\)/);
-                if (match)
+                if (match) {
                   detalhes.push({
                     valor: parseFloat(match[1].replace(",", ".")),
                     obs: match[2],
                   });
-                else if (!isNaN(parseFloat(d.replace(",", "."))))
+                } else if (!isNaN(parseFloat(d.replace(",", ".")))) {
                   detalhes.push({
                     valor: parseFloat(d.replace(",", ".")),
                     obs: "",
                   });
+                }
               });
             }
+
             return {
-              id: Date.now(),
+              id: Date.now() + Math.random(), // Evita colisão de IDs
               tipo: row.tipo,
               data: dataFormatada,
-              valor: parseFloat(row.valor),
-              detalhes: detalhes.length
-                ? detalhes
-                : [{ valor: parseFloat(row.valor), obs: "" }],
+              valor: valorNumerico,
+              detalhes: detalhes.length ?
+                detalhes :
+                [{
+                  valor: valorNumerico,
+                  obs: ""
+                }],
             };
           })
           .filter(Boolean);
+
         if (novasTransacoes.length === 0)
           return mostrarToast("Nenhuma transação válida encontrada.", "error");
+
+        // MELHORIA: Texto do modal mais claro.
         const confirmado = await mostrarModal(
-          "ADICIONAR dados importados ao histórico existente? \n\n('Cancelar' para SUBSTITUIR)."
+          "Deseja ADICIONAR os dados importados ao histórico existente? Clicar em 'Cancelar' irá SUBSTITUIR o histórico atual pelos dados do arquivo."
         );
+
         if (confirmado) transacoes.push(...novasTransacoes);
         else transacoes = novasTransacoes;
+
         configurarFiltros();
         atualizarTudo();
         mostrarToast(
@@ -792,9 +822,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const modoSalvo = localStorage.getItem("darkMode");
     const setModo = (isDark) => {
       document.body.classList.toggle("dark-mode", isDark);
-      toggleDarkModeBtn.innerHTML = isDark
-        ? `<i class="fas fa-sun"></i>`
-        : `<i class="fas fa-moon"></i>`;
+      toggleDarkModeBtn.innerHTML = isDark ?
+        `<i class="fas fa-sun"></i>` :
+        `<i class="fas fa-moon"></i>`;
       salvarModoEscuro(isDark);
       if (resumoMensalChart) atualizarGrafico();
       if (previsaoSaldoChart) atualizarPrevisaoSaldo();
@@ -804,7 +834,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- INICIALIZAÇÃO E EVENT LISTENERS ---
   const adicionarEventListeners = () => {
-    // Adiciona o listener de envio para o formulário principal de transações.
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       adicionarOuAtualizarTransacao();
@@ -842,9 +871,9 @@ document.addEventListener("DOMContentLoaded", () => {
     toggleDarkModeBtn.addEventListener("click", () => {
       const isDark = document.body.classList.toggle("dark-mode");
       salvarModoEscuro(isDark);
-      toggleDarkModeBtn.innerHTML = isDark
-        ? `<i class="fas fa-sun"></i>`
-        : `<i class="fas fa-moon"></i>`;
+      toggleDarkModeBtn.innerHTML = isDark ?
+        `<i class="fas fa-sun"></i>` :
+        `<i class="fas fa-moon"></i>`;
       if (!pageGraficos.classList.contains("page-hidden")) {
         atualizarGrafico();
         atualizarPrevisaoSaldo();
@@ -855,7 +884,6 @@ document.addEventListener("DOMContentLoaded", () => {
     modalRecorrenteFechar.addEventListener("click", fecharModalRecorrentes);
     formRecorrente.addEventListener("submit", adicionarRecorrente);
 
-    // MELHORIA: Adiciona listeners para fechar modais com Escape ou clique fora
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         if (!modalContainer.classList.contains("modal-hidden")) {
@@ -877,7 +905,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- FUNÇÃO DE INICIALIZAÇÃO DA APLICAÇÃO ---
   const iniciarApp = () => {
     carregarDadosIniciais();
-    adicionarEventListeners(); // Todos os listeners são adicionados aqui.
+    adicionarEventListeners();
     configurarFiltros();
     gerenciarModoEscuro();
     atualizarTudo();
@@ -887,3 +915,4 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- PONTO DE PARTIDA ---
   iniciarApp();
 });
+// --- FIM DO SCRIPT ---
