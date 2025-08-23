@@ -2,7 +2,7 @@
 PROJETO: GERENCIADOR FINANCEIRO MIRÁ SUSHI
 ======================================================================
 
-AUTOR: [Seu Nome Completo Aqui]
+AUTOR: Ulisses Shiramoto 
 CURSO: Análise e Desenvolvimento de Sistemas
 DATA: 22 de agosto de 2025
 
@@ -109,3 +109,4 @@ A aplicação é totalmente client-side e não requer um servidor para ser execu
 - **Categorização de Transações:** Permitir que o usuário crie e atribua categorias às transações para uma análise financeira mais detalhada.
 - **Testes Automatizados:** Desenvolver testes unitários (com Jest, por exemplo) para as funções de lógica de negócio e testes de ponta-a-ponta (com Cypress) para garantir a robustez da aplicação.
 - **Acessibilidade Avançada (a11y):** Implementar atributos ARIA (Accessible Rich Internet Applications) para melhorar a navegação e a experiência para usuários de tecnologias assistivas.
+
